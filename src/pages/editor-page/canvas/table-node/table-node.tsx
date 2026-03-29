@@ -272,14 +272,19 @@ export const TableNode: React.FC<NodeProps<TableNodeType>> = React.memo(
             });
         }, [table.id, updateTable]);
 
-        const relatedFieldIds = useMemo(() => {
-            const fieldIds = new Set<string>();
+        /** Fields on this table that are edge endpoints — must stay mounted (handles) when collapsed */
+        const tableRelationshipFieldIds = useMemo(() => {
+            const ids = new Set<string>();
             relationships.forEach((rel) => {
-                if (rel.sourceFieldId) fieldIds.add(rel.sourceFieldId);
-                if (rel.targetFieldId) fieldIds.add(rel.targetFieldId);
+                if (rel.sourceTableId === table.id) {
+                    ids.add(rel.sourceFieldId);
+                }
+                if (rel.targetTableId === table.id) {
+                    ids.add(rel.targetFieldId);
+                }
             });
-            return fieldIds;
-        }, [relationships]);
+            return ids;
+        }, [relationships, table.id]);
 
         const visibleFields = useMemo(() => {
             // If in edit mode, use the initial field count to keep consistent height
@@ -296,44 +301,48 @@ export const TableNode: React.FC<NodeProps<TableNodeType>> = React.memo(
             const nonMustDisplayedFields: DBField[] = [];
 
             for (const field of fieldsToConsider) {
-                if (relatedFieldIds.has(field.id) || field.primaryKey) {
+                if (
+                    tableRelationshipFieldIds.has(field.id) ||
+                    field.primaryKey
+                ) {
                     mustDisplayedFields.push(field);
                 } else {
                     nonMustDisplayedFields.push(field);
                 }
             }
 
-            // Take required fields up to limit
-            const visibleMustDisplayedFields = mustDisplayedFields.slice(
+            // Never cap relationship/PK rows: React Flow edges use per-field handles
+            // (left_rel_*, target_rel_*). Slicing here left >10 FK tables without handles.
+            const visibleMustDisplayedFields = mustDisplayedFields;
+            const remainingSlots = Math.max(
                 0,
-                TABLE_MINIMIZED_FIELDS
+                TABLE_MINIMIZED_FIELDS - visibleMustDisplayedFields.length
             );
-            const remainingSlots =
-                TABLE_MINIMIZED_FIELDS - visibleMustDisplayedFields.length;
 
-            // Fill remaining slots with non-required fields
             const visibleNonMustDisplayedFields =
                 remainingSlots > 0
                     ? nonMustDisplayedFields.slice(0, remainingSlots)
                     : [];
 
-            // Combine and maintain original order
             const visibleFieldsSet = new Set([
                 ...visibleMustDisplayedFields,
                 ...visibleNonMustDisplayedFields,
             ]);
-            const result = fieldsToConsider.filter((field) =>
+            return fieldsToConsider.filter((field) =>
                 visibleFieldsSet.has(field)
             );
-
-            return result;
         }, [
             expanded,
             fields,
-            relatedFieldIds,
+            tableRelationshipFieldIds,
             editTableMode,
             editModeInitialFieldCount,
         ]);
+
+        const fieldCountForExpandToggle =
+            editTableMode && editModeInitialFieldCount !== null
+                ? editModeInitialFieldCount
+                : fields.length;
 
         const isPartOfCreatingRelationship = useMemo(
             () =>
@@ -611,7 +620,7 @@ export const TableNode: React.FC<NodeProps<TableNodeType>> = React.memo(
                         style={{
                             maxHeight: expanded
                                 ? `${(editTableMode && editModeInitialFieldCount !== null ? editModeInitialFieldCount : fields.length) * 2}rem` // h-8 per field
-                                : `${TABLE_MINIMIZED_FIELDS * 2}rem`, // h-8 per field
+                                : `${Math.max(TABLE_MINIMIZED_FIELDS, visibleFields.length) * 2}rem`, // collapsed may show >10 rows so edge handles exist
                         }}
                     >
                         {visibleFields.map((field: DBField) => (
@@ -627,26 +636,27 @@ export const TableNode: React.FC<NodeProps<TableNodeType>> = React.memo(
                             />
                         ))}
                     </div>
-                    {(editTableMode && editModeInitialFieldCount !== null
-                        ? editModeInitialFieldCount
-                        : fields.length) > TABLE_MINIMIZED_FIELDS && (
-                        <div
-                            className="z-10 flex h-8 cursor-pointer items-center justify-center rounded-b-md border-t text-xs text-muted-foreground transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-800"
-                            onClick={toggleExpand}
-                        >
-                            {expanded ? (
-                                <>
-                                    <ChevronUp className="mr-1 size-3.5" />
-                                    {t('show_less')}
-                                </>
-                            ) : (
-                                <>
-                                    <ChevronDown className="mr-1 size-3.5" />
-                                    {t('show_more')}
-                                </>
-                            )}
-                        </div>
-                    )}
+                    {fieldCountForExpandToggle > TABLE_MINIMIZED_FIELDS &&
+                        (expanded ||
+                            visibleFields.length <
+                                fieldCountForExpandToggle) && (
+                            <div
+                                className="z-10 flex h-8 cursor-pointer items-center justify-center rounded-b-md border-t text-xs text-muted-foreground transition-colors duration-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                                onClick={toggleExpand}
+                            >
+                                {expanded ? (
+                                    <>
+                                        <ChevronUp className="mr-1 size-3.5" />
+                                        {t('show_less')}
+                                    </>
+                                ) : (
+                                    <>
+                                        <ChevronDown className="mr-1 size-3.5" />
+                                        {t('show_more')}
+                                    </>
+                                )}
+                            </div>
+                        )}
                 </div>
             </TableNodeContextMenu>
         );
