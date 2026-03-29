@@ -104,3 +104,27 @@ test('PUT id mismatch returns 400', async () => {
     });
     assert.equal(res.status, 400);
 });
+
+test('list uses filename stem when body id differs; GET uses stem', async () => {
+    const body = {
+        id: '0',
+        name: 'Mismatch body',
+        databaseType: 'generic',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-02T00:00:00.000Z',
+    };
+    await fs.writeFile(path.join(tmpDir, 'mismatch.json'), JSON.stringify(body));
+
+    const list = await fetch(`${baseUrl}/diagrams`);
+    assert.equal(list.status, 200);
+    const { diagrams } = await list.json();
+    const entry = diagrams.find((d) => d.id === 'mismatch');
+    assert.ok(entry, 'manifest id should be filename stem');
+    assert.equal(entry.name, 'Mismatch body');
+
+    const get = await fetch(`${baseUrl}/diagrams/mismatch`);
+    assert.equal(get.status, 200);
+    const got = await get.json();
+    assert.equal(got.id, '0');
+    assert.equal(got.name, 'Mismatch body');
+});

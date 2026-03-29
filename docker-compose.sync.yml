@@ -5,6 +5,7 @@
 #
 # Commit the contents of ./diagram-data (bind mount) or copy from a named volume.
 # Enable sync in the browser by setting DIAGRAM_SYNC_API_ENABLED=true on the chartdb service.
+# Diagram identity on disk is the .json filename stem; PUT body id must match (see sync-server/README.md).
 
 services:
   chartdb-sync:
@@ -28,7 +29,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - '8080:80'
+      - '8088:80'
     depends_on:
       - chartdb-sync
     environment:

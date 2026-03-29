@@ -7,8 +7,8 @@ import React, {
 import { useStorage } from '@/hooks/use-storage';
 import { useChartDB } from '@/hooks/use-chartdb';
 import {
-    diagramFromVolumeJSON,
     diagramToVolumeJSON,
+    parseDiagramForVolumePull,
 } from '@/lib/diagram-sync-json';
 import {
     diagramSyncAuthHeaders,
@@ -93,7 +93,10 @@ export const DiagramSyncProvider: React.FC<PropsWithChildren> = ({
                     if (!one.ok) continue;
                     const text = await one.text();
                     try {
-                        const diagram = diagramFromVolumeJSON(text);
+                        const diagram = parseDiagramForVolumePull(
+                            text,
+                            remote.id
+                        );
                         await applyPulledDiagram(diagram);
                         lastPushedJsonRef.current[remote.id] = text;
                     } catch {

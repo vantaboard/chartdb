@@ -82,7 +82,9 @@ async function listDiagramsMeta() {
                     doc.updatedAt != null
                         ? new Date(doc.updatedAt).toISOString()
                         : new Date(0).toISOString();
-                out.push({ id: doc.id, name: doc.name, updatedAt });
+                // Canonical API id is the filename stem so GET/PUT paths match on-disk files
+                // even when JSON body.id differs (e.g. share export id "0" in mismatch.json).
+                out.push({ id, name: doc.name, updatedAt });
             }
         } catch {
             // skip corrupt files

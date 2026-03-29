@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     diagramFromVolumeJSON,
     diagramToVolumeJSON,
+    parseDiagramForVolumePull,
 } from '../diagram-sync-json';
 import { DatabaseType } from '../domain/database-type';
 
@@ -38,5 +39,48 @@ describe('diagram-sync-json', () => {
         const d = diagramFromVolumeJSON(raw);
         expect(d.id).toBe('x1');
         expect(d.updatedAt.getUTCFullYear()).toBe(2020);
+    });
+
+    it('parseDiagramForVolumePull coerces top-level id to canonical filename stem', () => {
+        const raw = {
+            id: '0',
+            name: 'From share export',
+            databaseType: DatabaseType.GENERIC,
+            createdAt: '2020-01-01T00:00:00.000Z',
+            updatedAt: '2020-02-01T00:00:00.000Z',
+        };
+        const json = JSON.stringify(raw);
+        const d = parseDiagramForVolumePull(json, 'employees');
+        expect(d.id).toBe('employees');
+        expect(d.name).toBe('From share export');
+    });
+
+    it('parseDiagramForVolumePull leaves id unchanged when it matches canonical', () => {
+        const diagram = {
+            id: 'sameid',
+            name: 'N',
+            databaseType: DatabaseType.GENERIC,
+            createdAt: new Date('2020-01-01T00:00:00.000Z'),
+            updatedAt: new Date('2020-02-01T00:00:00.000Z'),
+        };
+        const json = diagramToVolumeJSON(diagram);
+        const d = parseDiagramForVolumePull(json, 'sameid');
+        expect(d.id).toBe('sameid');
+    });
+
+    it('parseDiagramForVolumePull falls back when volume rejects null tables', () => {
+        const json = JSON.stringify({
+            id: '0',
+            name: 'HandEdit',
+            databaseType: 'generic',
+            createdAt: '2020-01-01T00:00:00.000Z',
+            updatedAt: '2020-02-01T00:00:00.000Z',
+            tables: null,
+        });
+        expect(() => diagramFromVolumeJSON(json)).toThrow();
+        const d = parseDiagramForVolumePull(json, 'handedit');
+        expect(d.id).toBe('handedit');
+        expect(d.name).toBe('HandEdit');
+        expect(d.tables).toEqual([]);
     });
 });
