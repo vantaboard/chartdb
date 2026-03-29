@@ -1,5 +1,5 @@
 /** Diagram ids whose removal should be propagated to the sync volume (local user delete). */
-const STORAGE_KEY = 'chartdb_diagram_sync_pending_server_deletes';
+const STORAGE_KEY = 'chartdb_diagram_sync_pending_server_deletes_v2';
 
 export function queueDiagramSyncServerDelete(diagramId: string): void {
     if (!diagramId) return;
