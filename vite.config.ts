@@ -7,8 +7,9 @@ import UnpluginInjectPreload from 'unplugin-inject-preload/vite';
 // https://vitejs.dev/config/
 export default defineConfig({
     server: {
+        // Browser calls same origin (e.g. :5173) + DIAGRAM_SYNC_API_BASE; strip prefix for sync-server on 8080.
         proxy: {
-            '^/api/diagram-sync': {
+            '/api/diagram-sync': {
                 target: 'http://127.0.0.1:8080',
                 changeOrigin: true,
                 rewrite: (p) => p.replace(/^\/api\/diagram-sync/, '') || '/',
