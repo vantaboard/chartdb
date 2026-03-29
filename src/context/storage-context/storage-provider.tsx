@@ -12,6 +12,7 @@ import type { Area } from '@/lib/domain/area';
 import type { DBCustomType } from '@/lib/domain/db-custom-type';
 import type { DiagramFilter } from '@/lib/domain/diagram-filter/diagram-filter';
 import type { Note } from '@/lib/domain/note';
+import { queueDiagramSyncServerDelete } from '@/lib/diagram-sync-pending-deletes';
 
 export const StorageProvider: React.FC<React.PropsWithChildren> = ({
     children,
@@ -861,7 +862,7 @@ export const StorageProvider: React.FC<React.PropsWithChildren> = ({
     );
 
     const deleteDiagram: StorageContext['deleteDiagram'] = useCallback(
-        async (id) => {
+        async (id, options) => {
             await Promise.all([
                 db.diagrams.delete(id),
                 db.db_tables.where('diagramId').equals(id).delete(),
@@ -871,6 +872,9 @@ export const StorageProvider: React.FC<React.PropsWithChildren> = ({
                 db.db_custom_types.where('diagramId').equals(id).delete(),
                 db.notes.where('diagramId').equals(id).delete(),
             ]);
+            if (!options?.skipDiagramSyncServerDelete) {
+                queueDiagramSyncServerDelete(id);
+            }
         },
         [db]
     );

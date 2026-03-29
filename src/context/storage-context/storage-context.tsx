@@ -48,7 +48,10 @@ export interface StorageContext {
         id: string;
         attributes: Partial<Diagram>;
     }) => Promise<void>;
-    deleteDiagram: (id: string) => Promise<void>;
+    deleteDiagram: (
+        id: string,
+        options?: { skipDiagramSyncServerDelete?: boolean }
+    ) => Promise<void>;
 
     // Table operations
     addTable: (params: { diagramId: string; table: DBTable }) => Promise<void>;
