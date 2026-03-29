@@ -6,6 +6,15 @@ import UnpluginInjectPreload from 'unplugin-inject-preload/vite';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+    server: {
+        proxy: {
+            '^/api/diagram-sync': {
+                target: 'http://127.0.0.1:8080',
+                changeOrigin: true,
+                rewrite: (p) => p.replace(/^\/api\/diagram-sync/, '') || '/',
+            },
+        },
+    },
     plugins: [
         react(),
         visualizer({

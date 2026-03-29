@@ -1,0 +1,47 @@
+# Example: ChartDB UI + diagram JSON sync API sharing a Docker volume for git-friendly storage.
+#
+# Usage:
+#   docker compose -f docker-compose.sync.yml up --build
+#
+# Commit the contents of ./diagram-data (bind mount) or copy from a named volume.
+# Enable sync in the browser by setting DIAGRAM_SYNC_API_ENABLED=true on the chartdb service.
+
+services:
+  chartdb-sync:
+    build:
+      context: ./sync-server
+      dockerfile: Dockerfile
+    environment:
+      PORT: 8080
+      DATA_DIR: /data/diagrams
+      # Optional shared secret; must match DIAGRAM_SYNC_TOKEN on chartdb if set
+      SYNC_API_TOKEN: ${SYNC_API_TOKEN:-}
+    volumes:
+      # Named volume (default). To track JSON in git, use a bind mount instead, e.g.:
+      #   - ./diagram-data:/data/diagrams
+      - diagram_data:/data/diagrams
+    expose:
+      - '8080'
+
+  chartdb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '8080:80'
+    depends_on:
+      - chartdb-sync
+    environment:
+      CHARTDB_SYNC_UPSTREAM: chartdb-sync:8080
+      DIAGRAM_SYNC_API_ENABLED: ${DIAGRAM_SYNC_API_ENABLED:-true}
+      DIAGRAM_SYNC_POLL_MS: ${DIAGRAM_SYNC_POLL_MS:-30000}
+      DIAGRAM_SYNC_API_BASE: /api/diagram-sync
+      DIAGRAM_SYNC_TOKEN: ${SYNC_API_TOKEN:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_API_ENDPOINT: ${OPENAI_API_ENDPOINT:-}
+      LLM_MODEL_NAME: ${LLM_MODEL_NAME:-}
+      HIDE_CHARTDB_CLOUD: ${HIDE_CHARTDB_CLOUD:-false}
+      DISABLE_ANALYTICS: ${DISABLE_ANALYTICS:-false}
+
+volumes:
+  diagram_data:
