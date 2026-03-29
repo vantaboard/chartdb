@@ -105,6 +105,27 @@ test('PUT id mismatch returns 400', async () => {
     assert.equal(res.status, 400);
 });
 
+test('list includes hyphenated filename stems', async () => {
+    const body = {
+        id: 'school-pathways-slim',
+        name: 'School pathways',
+        databaseType: 'generic',
+        createdAt: '2024-01-01T00:00:00.000Z',
+        updatedAt: '2024-01-02T00:00:00.000Z',
+    };
+    await fs.writeFile(
+        path.join(tmpDir, 'school-pathways-slim.json'),
+        JSON.stringify(body)
+    );
+
+    const list = await fetch(`${baseUrl}/diagrams`);
+    assert.equal(list.status, 200);
+    const { diagrams } = await list.json();
+    const entry = diagrams.find((d) => d.id === 'school-pathways-slim');
+    assert.ok(entry, 'hyphenated stem should appear in manifest');
+    assert.equal(entry.name, 'School pathways');
+});
+
 test('list uses filename stem when body id differs; GET uses stem', async () => {
     const body = {
         id: '0',

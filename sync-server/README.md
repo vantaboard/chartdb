@@ -4,7 +4,7 @@ Small HTTP service that stores one JSON file per diagram under `DATA_DIR` (defau
 
 ## Canonical diagram id (filename)
 
-- Each diagram is stored as `<id>.json` where `<id>` is a safe alphanumeric string (same rules as ChartDB diagram ids in practice).
+- Each diagram is stored as `<id>.json` where `<id>` is a safe string: letters, digits, hyphen, and underscore (no dots or slashes), up to 128 characters—so names like `school-pathways-slim` are valid.
 - **`GET /diagrams`** returns each diagram’s **`id` as that filename stem**, not the `id` field inside the JSON body. That way `GET /diagrams/mydb` always reads `mydb.json`, even if the file was committed from a Backup export whose body still has `"id": "0"`.
 - **`PUT /diagrams/:id`** still requires the JSON body’s top-level **`id`** to match **`:id`** (and thus the filename). Auto-generators and git workflows should set `"id": "mydb"` when writing `mydb.json`.
 - The ChartDB app’s Backup menu export uses **renumbered** ids for sharing; for git-friendly stable ids use the app’s volume sync (or `diagramToVolumeJSON` in source). Mixed files are still pullable: the client coerces the in-browser diagram id to the filename stem on pull.
@@ -26,6 +26,15 @@ Small HTTP service that stores one JSON file per diagram under `DATA_DIR` (defau
 - `PORT` (default `8080`)
 - `DATA_DIR` (default `/data/diagrams`)
 - `SYNC_API_TOKEN` — if set, require `Authorization: Bearer <token>`
+
+## Development (auto-reload)
+
+`node --watch` restarts the process when `server.mjs` (or imported local modules) change:
+
+```bash
+cd sync-server
+DATA_DIR="$(pwd)/../diagram-data" PORT=8080 npm run dev
+```
 
 ## Local smoke test
 

@@ -9,7 +9,13 @@ const SYNC_API_TOKEN = process.env.SYNC_API_TOKEN?.trim() || '';
 
 /** @param {string} id */
 function isSafeDiagramId(id) {
-    return typeof id === 'string' && id.length > 0 && id.length <= 128 && /^[0-9a-zA-Z]+$/.test(id);
+    return (
+        typeof id === 'string' &&
+        id.length > 0 &&
+        id.length <= 128 &&
+        // Filename stems / URL segments: alphanumerics plus hyphen and underscore (no `.` or `/`).
+        /^[0-9a-zA-Z_-]+$/.test(id)
+    );
 }
 
 function sendJson(res, status, body) {
