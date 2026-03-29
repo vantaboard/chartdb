@@ -69,21 +69,40 @@ export const DiagramSyncProvider: React.FC<PropsWithChildren> = ({
         const base = cfg.apiBase;
 
         try {
-            const listRes = await fetch(`${base}/diagrams`, {
+            let listRes = await fetch(`${base}/diagrams`, {
                 headers: { ...auth },
             });
             if (!listRes.ok) return;
 
-            const { diagrams: serverList } =
-                (await listRes.json()) as ServerListResponse;
-            const serverMap = new Map(
-                serverList.map((d) => [d.id, d] as const)
+            let serverDiagrams = ((await listRes.json()) as ServerListResponse)
+                .diagrams;
+
+            let localList = await storageDB.listDiagrams();
+            let localMap = new Map(localList.map((d) => [d.id, d] as const));
+
+            // Remove volume files that have no local diagram *before* pull, so we do not
+            // re-import a diagram the user just deleted (pull-before-delete caused DELETE+PUT).
+            for (const remote of serverDiagrams) {
+                if (!localMap.has(remote.id)) {
+                    await fetch(`${base}/diagrams/${remote.id}`, {
+                        method: 'DELETE',
+                        headers: { ...auth },
+                    });
+                    delete lastPushedJsonRef.current[remote.id];
+                }
+            }
+
+            listRes = await fetch(`${base}/diagrams`, {
+                headers: { ...auth },
+            });
+            if (!listRes.ok) return;
+            serverDiagrams = ((await listRes.json()) as ServerListResponse)
+                .diagrams;
+            let serverMap = new Map(
+                serverDiagrams.map((d) => [d.id, d] as const)
             );
 
-            const localList = await storageDB.listDiagrams();
-            const localMap = new Map(localList.map((d) => [d.id, d] as const));
-
-            for (const remote of serverList) {
+            for (const remote of serverDiagrams) {
                 const local = localMap.get(remote.id);
                 const remoteMs = updatedAtMs(remote.updatedAt);
                 if (!local || remoteMs > updatedAtMs(local.updatedAt)) {
@@ -105,7 +124,10 @@ export const DiagramSyncProvider: React.FC<PropsWithChildren> = ({
                 }
             }
 
-            for (const remote of serverList) {
+            localList = await storageDB.listDiagrams();
+            localMap = new Map(localList.map((d) => [d.id, d] as const));
+
+            for (const remote of serverDiagrams) {
                 if (!localMap.has(remote.id)) {
                     await fetch(`${base}/diagrams/${remote.id}`, {
                         method: 'DELETE',
@@ -114,6 +136,16 @@ export const DiagramSyncProvider: React.FC<PropsWithChildren> = ({
                     delete lastPushedJsonRef.current[remote.id];
                 }
             }
+
+            listRes = await fetch(`${base}/diagrams`, {
+                headers: { ...auth },
+            });
+            if (!listRes.ok) return;
+            serverDiagrams = ((await listRes.json()) as ServerListResponse)
+                .diagrams;
+            serverMap = new Map(serverDiagrams.map((d) => [d.id, d] as const));
+
+            localList = await storageDB.listDiagrams();
 
             for (const local of localList) {
                 const full = await storageDB.getDiagram(local.id, {

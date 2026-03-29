@@ -9,6 +9,8 @@ Small HTTP service that stores one JSON file per diagram under `DATA_DIR` (defau
 - **`PUT /diagrams/:id`** still requires the JSON body’s top-level **`id`** to match **`:id`** (and thus the filename). Auto-generators and git workflows should set `"id": "mydb"` when writing `mydb.json`.
 - The ChartDB app’s Backup menu export uses **renumbered** ids for sharing; for git-friendly stable ids use the app’s volume sync (or `diagramToVolumeJSON` in source). Mixed files are still pullable: the client coerces the in-browser diagram id to the filename stem on pull.
 
+**Sync order (browser):** Volume files that have no local IndexedDB diagram are removed **before** pulling from the volume, so a diagram you delete in the UI is not immediately re-imported from disk in the same sync (which previously could cause a `DELETE` followed by a `PUT`). This assumes a **single-writer** or branch-based git workflow; another user’s new diagram file that you have never pulled will look like an “orphan” and be deleted locally if it is not in your IndexedDB yet.
+
 ## Endpoints
 
 | Method | Path | Description |
