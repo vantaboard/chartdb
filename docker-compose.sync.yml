@@ -4,7 +4,7 @@
 #   docker compose -f docker-compose.sync.yml up --build
 #
 # Commit the contents of ./diagram-data (bind mount) or copy from a named volume.
-# Enable sync in the browser by setting DIAGRAM_SYNC_API_ENABLED=true on the chartdb service.
+# Enable sync: set DIAGRAM_SYNC_API_ENABLED=true in a `.env` file next to this compose file, or under chartdb.environment below.
 # Diagram identity on disk is the .json filename stem; PUT body id must match (see sync-server/README.md).
 
 services:
