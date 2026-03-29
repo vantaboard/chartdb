@@ -80,7 +80,15 @@ const arePropsEqual = (
 };
 
 export const TableNodeField: React.FC<TableNodeFieldProps> = React.memo(
-    ({ field, focused, tableNodeId, highlighted, visible, isConnectable, targetEdgeCount }) => {
+    ({
+        field,
+        focused,
+        tableNodeId,
+        highlighted,
+        visible,
+        isConnectable,
+        targetEdgeCount,
+    }) => {
         const { relationships, readonly, highlightedCustomType, databaseType } =
             useChartDB();
 
@@ -173,7 +181,8 @@ export const TableNodeField: React.FC<TableNodeFieldProps> = React.memo(
                 // Use requestAnimationFrame for immediate but batched update
                 const frameId = requestAnimationFrame(() => {
                     updateNodeInternals(tableNodeId);
-                    previousNumberOfEdgesToFieldRef.current = numberOfEdgesToField;
+                    previousNumberOfEdgesToFieldRef.current =
+                        numberOfEdgesToField;
                 });
                 return () => cancelAnimationFrame(frameId);
             }

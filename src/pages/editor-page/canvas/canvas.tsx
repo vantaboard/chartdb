@@ -424,13 +424,14 @@ export const Canvas: React.FC<CanvasProps> = ({ initialTables }) => {
                 {} as Record<string, number>
             );
 
-            const targetDepIndexes: Record<string, number> = dependencies.reduce(
-                (acc, dep) => {
-                    acc[dep.tableId] = 0;
-                    return acc;
-                },
-                {} as Record<string, number>
-            );
+            const targetDepIndexes: Record<string, number> =
+                dependencies.reduce(
+                    (acc, dep) => {
+                        acc[dep.tableId] = 0;
+                        return acc;
+                    },
+                    {} as Record<string, number>
+                );
 
             setEdges((prevEdges) => {
                 // Create a map of previous edge states to preserve selection
@@ -442,20 +443,24 @@ export const Canvas: React.FC<CanvasProps> = ({ initialTables }) => {
                 );
 
                 return [
-                    ...relationships.map((relationship): RelationshipEdgeType => {
-                        const prevState = prevEdgeStates.get(relationship.id);
-                        return {
-                            id: relationship.id,
-                            source: relationship.sourceTableId,
-                            target: relationship.targetTableId,
-                            sourceHandle: `${LEFT_HANDLE_ID_PREFIX}${relationship.sourceFieldId}`,
-                            targetHandle: `${TARGET_ID_PREFIX}${targetIndexes[`${relationship.targetTableId}${relationship.targetFieldId}`]++}_${relationship.targetFieldId}`,
-                            type: 'relationship-edge',
-                            data: { relationship },
-                            selected: prevState?.selected ?? false,
-                            animated: prevState?.animated ?? false,
-                        };
-                    }),
+                    ...relationships.map(
+                        (relationship): RelationshipEdgeType => {
+                            const prevState = prevEdgeStates.get(
+                                relationship.id
+                            );
+                            return {
+                                id: relationship.id,
+                                source: relationship.sourceTableId,
+                                target: relationship.targetTableId,
+                                sourceHandle: `${LEFT_HANDLE_ID_PREFIX}${relationship.sourceFieldId}`,
+                                targetHandle: `${TARGET_ID_PREFIX}${targetIndexes[`${relationship.targetTableId}${relationship.targetFieldId}`]++}_${relationship.targetFieldId}`,
+                                type: 'relationship-edge',
+                                data: { relationship },
+                                selected: prevState?.selected ?? false,
+                                animated: prevState?.animated ?? false,
+                            };
+                        }
+                    ),
                     ...dependencies.map((dep): DependencyEdgeType => {
                         const prevState = prevEdgeStates.get(dep.id);
                         return {
@@ -476,7 +481,14 @@ export const Canvas: React.FC<CanvasProps> = ({ initialTables }) => {
         }, 100); // Delay to let handles register after updateNodeInternals
 
         return () => clearTimeout(timeoutId);
-    }, [relationships, dependencies, setEdges, showDBViews, tables, updateNodeInternals]);
+    }, [
+        relationships,
+        dependencies,
+        setEdges,
+        showDBViews,
+        tables,
+        updateNodeInternals,
+    ]);
 
     useEffect(() => {
         const selectedNodesIds = nodes
@@ -577,7 +589,8 @@ export const Canvas: React.FC<CanvasProps> = ({ initialTables }) => {
         const targetEdgeCountsByField: Record<string, number> = {};
         relationships.forEach((rel) => {
             const fieldId = rel.targetFieldId;
-            targetEdgeCountsByField[fieldId] = (targetEdgeCountsByField[fieldId] || 0) + 1;
+            targetEdgeCountsByField[fieldId] =
+                (targetEdgeCountsByField[fieldId] || 0) + 1;
         });
 
         setNodes((prevNodes) => {
@@ -585,12 +598,13 @@ export const Canvas: React.FC<CanvasProps> = ({ initialTables }) => {
                 ...tables.map((table) => {
                     const isOverlapping =
                         (overlapGraph.graph.get(table.id) ?? []).length > 0;
-                    
+
                     // Get target edge counts for this table's fields
                     const tableTargetEdgeCounts: Record<string, number> = {};
                     table.fields.forEach((field) => {
                         if (targetEdgeCountsByField[field.id]) {
-                            tableTargetEdgeCounts[field.id] = targetEdgeCountsByField[field.id];
+                            tableTargetEdgeCounts[field.id] =
+                                targetEdgeCountsByField[field.id];
                         }
                     });
 
