@@ -218,6 +218,9 @@ const server = http.createServer(async (req, res) => {
         }
 
         if (req.method === 'DELETE') {
+            console.error(
+                `[chartdb-diagram-sync] DELETE ${id} ${new Date().toISOString()}`
+            );
             try {
                 await fs.unlink(fp);
             } catch (e) {

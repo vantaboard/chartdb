@@ -76,9 +76,22 @@ export const DiagramSyncProvider: React.FC<PropsWithChildren> = ({
 
         try {
             const pendingDeletes = getPendingDiagramSyncServerDeletes();
+            const localIdsForPending = new Set(
+                (await storageDB.listDiagrams()).map((d) => d.id)
+            );
             if (pendingDeletes.length > 0) {
                 const failed: string[] = [];
                 for (const id of pendingDeletes) {
+                    if (localIdsForPending.has(id)) {
+                        // Stale queue entry (e.g. bug that queued without a real catalog delete).
+                        // Never DELETE volume files while this diagram still exists locally.
+                        if (import.meta.env.DEV) {
+                            console.warn(
+                                `[diagram-sync] dropped stale pending server delete for ${id} (diagram still in IndexedDB)`
+                            );
+                        }
+                        continue;
+                    }
                     const res = await fetch(
                         `${base}/diagrams/${encodeURIComponent(id)}`,
                         {

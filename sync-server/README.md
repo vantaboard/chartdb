@@ -27,6 +27,8 @@ Small HTTP service that stores one JSON file per diagram under `DATA_DIR` (defau
 - `DATA_DIR` (default `/data/diagrams`)
 - `SYNC_API_TOKEN` — if set, require `Authorization: Bearer <token>`
 
+Each successful `DELETE` is logged to stderr as `[chartdb-diagram-sync] DELETE <id> <ISO time>` so you can correlate volume removals with HTTP clients (including other browser tabs or tools).
+
 ## Development (auto-reload)
 
 `node --watch` restarts the process when `server.mjs` (or imported local modules) change:
