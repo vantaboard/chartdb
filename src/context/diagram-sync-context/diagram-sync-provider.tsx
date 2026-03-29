@@ -57,9 +57,7 @@ export const DiagramSyncProvider: React.FC<PropsWithChildren> = ({
             if (diagram.id === openDiagramId) {
                 await updateDiagramData(diagram, { forceUpdateStorage: true });
             } else {
-                await storageDB.deleteDiagram(diagram.id, {
-                    skipDiagramSyncServerDelete: true,
-                });
+                await storageDB.deleteDiagram(diagram.id);
                 await storageDB.addDiagram({ diagram });
             }
         },

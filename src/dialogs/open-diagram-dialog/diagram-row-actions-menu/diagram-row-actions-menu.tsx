@@ -11,6 +11,7 @@ import { Ellipsis, Layers2, SquareArrowOutUpRight, Trash2 } from 'lucide-react';
 import { useChartDB } from '@/hooks/use-chartdb';
 import type { Diagram } from '@/lib/domain';
 import { useStorage } from '@/hooks/use-storage';
+import { queueDiagramSyncServerDelete } from '@/lib/diagram-sync-pending-deletes';
 import { cloneDiagram } from '@/lib/clone';
 import { useTranslation } from 'react-i18next';
 
@@ -32,7 +33,8 @@ export const DiagramRowActionsMenu: React.FC<DiagramRowActionsMenuProps> = ({
     const { t } = useTranslation();
 
     const onDelete = useCallback(async () => {
-        deleteDiagram(diagram.id);
+        await deleteDiagram(diagram.id);
+        queueDiagramSyncServerDelete(diagram.id);
         refetch();
 
         if (diagram.id === diagramId || numberOfDiagrams <= 1) {

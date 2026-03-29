@@ -27,6 +27,7 @@ import type { DBDependency } from '@/lib/domain/db-dependency';
 import type { Area } from '@/lib/domain/area';
 import type { Note } from '@/lib/domain/note';
 import { storageInitialValue } from '../storage-context/storage-context';
+import { queueDiagramSyncServerDelete } from '@/lib/diagram-sync-pending-deletes';
 import { useDiff } from '../diff-context/use-diff';
 import type { DiffCalculatedEvent } from '../diff-context/diff-context';
 import {
@@ -220,6 +221,7 @@ export const ChartDBProvider: React.FC<
                 db.deleteDiagramCustomTypes(diagramId),
                 db.deleteDiagramNotes(diagramId),
             ]);
+            queueDiagramSyncServerDelete(diagramId);
         }, [db, diagramId, resetRedoStack, resetUndoStack]);
 
     const updateDiagramUpdatedAt: ChartDBContext['updateDiagramUpdatedAt'] =
@@ -1924,9 +1926,7 @@ export const ChartDBProvider: React.FC<
     const updateDiagramData: ChartDBContext['updateDiagramData'] = useCallback(
         async (diagram, options) => {
             const st = options?.forceUpdateStorage ? storageDB : db;
-            await st.deleteDiagram(diagram.id, {
-                skipDiagramSyncServerDelete: true,
-            });
+            await st.deleteDiagram(diagram.id);
             await st.addDiagram({ diagram });
             loadDiagramFromData(diagram);
         },

@@ -9,7 +9,7 @@ Small HTTP service that stores one JSON file per diagram under `DATA_DIR` (defau
 - **`PUT /diagrams/:id`** still requires the JSON body’s top-level **`id`** to match **`:id`** (and thus the filename). Auto-generators and git workflows should set `"id": "mydb"` when writing `mydb.json`.
 - The ChartDB app’s Backup menu export uses **renumbered** ids for sharing; for git-friendly stable ids use the app’s volume sync (or `diagramToVolumeJSON` in source). Mixed files are still pullable: the client coerces the in-browser diagram id to the filename stem on pull.
 
-**Deleting in the app:** When you remove a diagram from the local list, the next sync sends `DELETE` for that id on the volume so the `.json` file is removed. New files you copy into `DATA_DIR` (or another machine’s additions) are **pulled** on the next sync—they are not deleted just because they are not in IndexedDB yet.
+**Deleting in the app:** Only **explicit** removals (trash from the diagram list, or **Delete diagram** in the editor menu) queue a volume `DELETE`. Internal storage replaces (examples, template clone, sync import) do **not** remove the `.json` file. New files you copy into `DATA_DIR` are **pulled** on the next sync.
 
 ## Endpoints
 
